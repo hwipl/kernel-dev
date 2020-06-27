@@ -20,3 +20,6 @@ fail because `skb->protocol` is `0`.
 
 The patch in [net-next.patch](net-next.patch) is an initial attempt to fix the
 issue for testing and was posted when reporting the issue.
+
+The files [rawsock-pcap.go](rawsock-pcap.go) and [rawsock.go](rawsock.go)
+contain test code to reproduce the issue.
