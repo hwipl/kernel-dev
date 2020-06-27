@@ -1,0 +1,55 @@
+diff --git a/drivers/net/wireguard/allowedips.c b/drivers/net/wireguard/allowedips.c
+index 3725e9cd85f4..08e16907fde5 100644
+--- a/drivers/net/wireguard/allowedips.c
++++ b/drivers/net/wireguard/allowedips.c
+@@ -5,6 +5,7 @@
+ 
+ #include "allowedips.h"
+ #include "peer.h"
++#include "queueing.h"
+ 
+ static void swap_endian(u8 *dst, const u8 *src, u8 bits)
+ {
+@@ -356,9 +357,9 @@ int wg_allowedips_read_node(struct allowedips_node *node, u8 ip[16], u8 *cidr)
+ struct wg_peer *wg_allowedips_lookup_dst(struct allowedips *table,
+ 					 struct sk_buff *skb)
+ {
+-	if (skb->protocol == htons(ETH_P_IP))
++	if (wg_examine_packet_protocol(skb) == htons(ETH_P_IP))
+ 		return lookup(table->root4, 32, &ip_hdr(skb)->daddr);
+-	else if (skb->protocol == htons(ETH_P_IPV6))
++	else if (wg_examine_packet_protocol(skb) == htons(ETH_P_IPV6))
+ 		return lookup(table->root6, 128, &ipv6_hdr(skb)->daddr);
+ 	return NULL;
+ }
+diff --git a/drivers/net/wireguard/device.c b/drivers/net/wireguard/device.c
+index a8f151b1b5fa..baed429b2ed1 100644
+--- a/drivers/net/wireguard/device.c
++++ b/drivers/net/wireguard/device.c
+@@ -132,10 +132,10 @@ static netdev_tx_t wg_xmit(struct sk_buff *skb, struct net_device *dev)
+ 	peer = wg_allowedips_lookup_dst(&wg->peer_allowedips, skb);
+ 	if (unlikely(!peer)) {
+ 		ret = -ENOKEY;
+-		if (skb->protocol == htons(ETH_P_IP))
++		if (wg_examine_packet_protocol(skb) == htons(ETH_P_IP))
+ 			net_dbg_ratelimited("%s: No peer has allowed IPs matching %pI4\n",
+ 					    dev->name, &ip_hdr(skb)->daddr);
+-		else if (skb->protocol == htons(ETH_P_IPV6))
++		else if (wg_examine_packet_protocol(skb) == htons(ETH_P_IPV6))
+ 			net_dbg_ratelimited("%s: No peer has allowed IPs matching %pI6\n",
+ 					    dev->name, &ipv6_hdr(skb)->daddr);
+ 		goto err;
+diff --git a/drivers/net/wireguard/queueing.h b/drivers/net/wireguard/queueing.h
+index c58df439dbbe..36badcf8a11d 100644
+--- a/drivers/net/wireguard/queueing.h
++++ b/drivers/net/wireguard/queueing.h
+@@ -84,7 +84,8 @@ static inline __be16 wg_examine_packet_protocol(struct sk_buff *skb)
+ static inline bool wg_check_packet_protocol(struct sk_buff *skb)
+ {
+ 	__be16 real_protocol = wg_examine_packet_protocol(skb);
+-	return real_protocol && skb->protocol == real_protocol;
++	return real_protocol == htons(ETH_P_IP) ||
++		real_protocol == htons(ETH_P_IPV6);
+ }
+ 
+ static inline void wg_reset_packet(struct sk_buff *skb, bool encapsulating)
