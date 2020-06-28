@@ -19,7 +19,15 @@ in the functions
 fail because `skb->protocol` is `0`.
 
 The patch in [net-next.patch](net-next.patch) is an initial attempt to fix the
-issue for testing and was posted when reporting the issue.
+issue for testing and was posted when reporting the issue. The patch is for
+`net-next` version `5.8.0-rc2`.
 
 The files [rawsock-pcap.go](rawsock-pcap.go) and [rawsock.go](rawsock.go)
-contain test code to reproduce the issue.
+contain test code to reproduce the issue. The pcap version reproduces the
+situation that triggered this issue. The other version opens `AF_PACKET`
+sockets without libpcap and sets the protocol of the sockets to `0`.
+
+For testing, it is useful to enable debug messages for wireguard:
+```console
+# echo module wireguard +p > /sys/kernel/debug/dynamic_debug/control
+```
