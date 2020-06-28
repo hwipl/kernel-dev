@@ -34,10 +34,10 @@ For testing, it is useful to enable debug messages for wireguard:
 ```
 
 After the issue was reported, Jason A. Donenfeld investigated the problem and
-discovered that it is not an libpcap-only or specific issue and applies to
-`AF_PACKET` sockets in general. Also, he found out that, besides wireguard, it
-applies to other tunnel devices as well. The cause of the issue is that
-wireguard does not implement `dev->header_ops`.
+discovered that it is neither a libpcap-only nor a libpcap-specific issue and
+applies to `AF_PACKET` sockets in general. As a side-note, he also found out
+that, besides wireguard, it applies to other tunnel devices as well. The cause
+of the issue is that wireguard does not implement `dev->header_ops`.
 
 According to his analysis the test program triggers calls into `af_packet`'s
 `packet_sendmsg->packet_snd` function and, thus, into
@@ -100,3 +100,20 @@ EXPORT_SYMBOL(ip_tunnel_parse_protocol);
 const struct header_ops ip_tunnel_header_ops = { .parse_protocol = ip_tunnel_parse_protocol };
 EXPORT_SYMBOL(ip_tunnel_header_ops);
 ```
+
+Willem de Bruijn also commented on the skb protocol in `AF_PACKET` sockets:
+
+> Not setting skb protocol when sending over packet sockets causes many
+> headaches. Besides packet\_parse\_headers, virtio\_net\_hdr\_to\_skb also
+> tries to infer it.
+>
+> Packet sockets give various options to configure it explicitly: by
+> choosing that protocol in socket(), bind() or, preferably, by passing
+> it as argument to sendmsg. The socket/bind argument also configures
+> the filter to receive packets, so for send-only sockets it is
+> especially useful to choose ETH\_P\_NONE (0) there. This is not an
+> "incorrect" option.
+>
+> Libpcap does have a pcap\_set\_protocol function, but it is fairly
+> recent, so few processes will likely be using it. And again it is
+> still not ideal if a socket is opened only for transmit.
