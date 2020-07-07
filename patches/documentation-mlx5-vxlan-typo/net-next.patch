@@ -1,0 +1,13 @@
+diff --git a/Documentation/networking/device_drivers/mellanox/mlx5.rst b/Documentation/networking/device_drivers/mellanox/mlx5.rst
+index f575a49790e8..e9b65035cd47 100644
+--- a/Documentation/networking/device_drivers/mellanox/mlx5.rst
++++ b/Documentation/networking/device_drivers/mellanox/mlx5.rst
+@@ -101,7 +101,7 @@ Enabling the driver and kconfig options
+ **External options** ( Choose if the corresponding mlx5 feature is required )
+ 
+ - CONFIG_PTP_1588_CLOCK: When chosen, mlx5 ptp support will be enabled
+-- CONFIG_VXLAN: When chosen, mlx5 vxaln support will be enabled.
++- CONFIG_VXLAN: When chosen, mlx5 vxlan support will be enabled.
+ - CONFIG_MLXFW: When chosen, mlx5 firmware flashing support will be enabled (via devlink and ethtool).
+ 
+ Devlink info
