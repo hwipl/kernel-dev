@@ -1,0 +1,37 @@
+diff --git a/net/smc/smc_clc.c b/net/smc/smc_clc.c
+index 3e16b887cfcf..ea0068f0173c 100644
+--- a/net/smc/smc_clc.c
++++ b/net/smc/smc_clc.c
+@@ -372,7 +372,8 @@ int smc_clc_send_decline(struct smc_sock *smc, u32 peer_diag_info)
+ 	dclc.hdr.length = htons(sizeof(struct smc_clc_msg_decline));
+ 	dclc.hdr.version = SMC_CLC_V1;
+ 	dclc.hdr.flag = (peer_diag_info == SMC_CLC_DECL_SYNCERR) ? 1 : 0;
+-	if (smc->conn.lgr && !smc->conn.lgr->is_smcd)
++	if ((!smc->conn.lgr || !smc->conn.lgr->is_smcd) &&
++	    smc_ib_is_valid_local_systemid())
+ 		memcpy(dclc.id_for_peer, local_systemid,
+ 		       sizeof(local_systemid));
+ 	dclc.peer_diagnosis = htonl(peer_diag_info);
+diff --git a/net/smc/smc_ib.c b/net/smc/smc_ib.c
+index e0592d337a94..3444de27fecd 100644
+--- a/net/smc/smc_ib.c
++++ b/net/smc/smc_ib.c
+@@ -166,7 +166,7 @@ static inline void smc_ib_define_local_systemid(struct smc_ib_device *smcibdev,
+ 	       sizeof(smcibdev->mac[ibport - 1]));
+ }
+ 
+-static bool smc_ib_is_valid_local_systemid(void)
++bool smc_ib_is_valid_local_systemid(void)
+ {
+ 	return !is_zero_ether_addr(&local_systemid[2]);
+ }
+diff --git a/net/smc/smc_ib.h b/net/smc/smc_ib.h
+index 255db87547d3..5c2b115d36da 100644
+--- a/net/smc/smc_ib.h
++++ b/net/smc/smc_ib.h
+@@ -84,4 +84,5 @@ void smc_ib_sync_sg_for_device(struct smc_ib_device *smcibdev,
+ 			       enum dma_data_direction data_direction);
+ int smc_ib_determine_gid(struct smc_ib_device *smcibdev, u8 ibport,
+ 			 unsigned short vlan_id, u8 gid[], u8 *sgid_index);
++bool smc_ib_is_valid_local_systemid(void);
+ #endif
