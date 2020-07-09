@@ -76,8 +76,8 @@ As a result, the `skb->protocol` is set to `0` when the packets reach
 `wg_xmit()`.
 
 He posted a patch series on the netdev mailing list that fixes this issue for
-ipip, wireguard, and tun devices by adding `header_ops` for these devices. They
-are called `ip_tunnel_header_ops` and use wireguard's
+ipip, wireguard, tun, vti, sit, and xfrmi devices by adding `header_ops` for
+these devices. They are called `ip_tunnel_header_ops` and use wireguard's
 `wg_examine_packet_protocol()` function renamed to `ip_tunnel_parse_protocol()`
 as `parse_protocol`:
 
@@ -117,3 +117,6 @@ Willem de Bruijn also commented on the skb protocol in `AF_PACKET` sockets:
 > Libpcap does have a pcap\_set\_protocol function, but it is fairly
 > recent, so few processes will likely be using it. And again it is
 > still not ideal if a socket is opened only for transmit.
+
+Jason's patch series was accepted and merged into the `net` tree on 30 June
+2020.
